@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { uploadFile } from "../utils/api";
+import { uploadFile, uploadFileAI } from "../utils/api";
 
-export default function FileUpload({ setResult, setLoading, setError }) {
+export default function FileUpload({ setResult, setAiResult, setLoading, setError, mode }) {
   const [file, setFile] = useState(null);
   const inputRef = useRef();
 
@@ -9,9 +9,10 @@ export default function FileUpload({ setResult, setLoading, setError }) {
     setFile(e.target.files[0]);
   };
 
-  const submit = async () => {
+  const runAnalysis = async () => {
     setError("");
     setResult(null);
+    setAiResult(null);
 
     if (!file) {
       setError("Please select a file first.");
@@ -21,12 +22,20 @@ export default function FileUpload({ setResult, setLoading, setError }) {
     setLoading(true);
 
     try {
-      const data = await uploadFile(file);
-      setResult(data);
+      let data;
+
+      if (mode === "ai") {
+        data = await uploadFileAI(file);
+        setAiResult(data);
+      } else {
+        data = await uploadFile(file);
+        setResult(data);
+      }
     } catch (err) {
       console.log(err);
       setError(
-        err?.response?.data?.error || "Failed to process file. Please try again."
+        err?.response?.data?.error ||
+        "Failed to process file. Please try again."
       );
     } finally {
       setLoading(false);
@@ -53,11 +62,16 @@ export default function FileUpload({ setResult, setLoading, setError }) {
         {file && <p className="mt-2 text-gray-800">{file.name}</p>}
       </div>
 
+      {/* ANALYZE BUTTON */}
       <button
-        onClick={submit}
-        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded"
+        onClick={runAnalysis}
+        className={`mt-4 w-full text-white font-semibold py-2 rounded ${
+          mode === "ai"
+            ? "bg-purple-600 hover:bg-purple-700"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
       >
-        Analyze Content
+        {mode === "ai" ? "Analyze with AI ✨" : "Analyze (Normal)"}
       </button>
     </div>
   );

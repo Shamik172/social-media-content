@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 const uploadRoutes = require("./routes/uploadRoutes");
+const uploadAIRoutes = require("./routes/uploadAIRoutes");
 
 dotenv.config();
 
@@ -23,6 +24,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/upload", uploadRoutes);
+app.use("/api/upload-ai", uploadAIRoutes);
+
+console.log("ENV KEY:", process.env.GEMINI_API_KEY ? "LOADED" : "NOT LOADED");
+
 
 // Port
 const PORT = process.env.PORT || 5000;
