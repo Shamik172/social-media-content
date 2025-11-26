@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 eng.traineddata
 uploads/
+
+
+.env
+.env.local
+.env.*.local
