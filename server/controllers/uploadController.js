@@ -1,9 +1,11 @@
 const path = require("path");
+const fs = require("fs");
 const pdfService = require("../services/pdfService");
 const ocrService = require("../services/ocrService");
 const analysisService = require("../services/analysisService");
 const aiService = require("../services/aiService");
 
+// Extract text depending on type
 const extractText = async (filePath, ext) => {
   if (ext === ".pdf") {
     return await pdfService.extractTextFromPDF(filePath);
@@ -16,20 +18,19 @@ const extractText = async (filePath, ext) => {
   throw new Error("Unsupported file type");
 };
 
-
-// NORMAL RULE-BASED ANALYSIS
+// NORMAL ANALYSIS
 exports.handleUpload = async (req, res) => {
+  let filePath = req.file?.path;
+
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const filePath = req.file.path;
     const ext = path.extname(req.file.originalname).toLowerCase();
-
     const extractedText = await extractText(filePath, ext);
 
-    if (!extractedText || extractedText.trim().length === 0) {
+    if (!extractedText.trim()) {
       return res.status(200).json({
         text: "",
         analysis: null,
@@ -46,22 +47,29 @@ exports.handleUpload = async (req, res) => {
     return res.status(500).json({
       error: "Internal server error while processing the file.",
     });
+  } finally {
+    // DELETE FILE AFTER ANALYSIS
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log("Deleted uploaded file:", filePath);
+    }
   }
 };
 
-// AI-BASED ANALYSIS
+
+// AI ANALYSIS
 exports.handleUploadAI = async (req, res) => {
+  let filePath = req.file?.path;
+
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const filePath = req.file.path;
     const ext = path.extname(req.file.originalname).toLowerCase();
-
     const extractedText = await extractText(filePath, ext);
 
-    if (!extractedText || extractedText.trim().length === 0) {
+    if (!extractedText.trim()) {
       return res.status(200).json({
         text: "",
         ai: null,
@@ -76,5 +84,11 @@ exports.handleUploadAI = async (req, res) => {
   } catch (err) {
     console.error("AI Error:", err);
     return res.status(500).json({ error: "AI analysis failed." });
+  } finally {
+    // DELETE FILE AFTER ANALYSIS
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log("Deleted uploaded file:", filePath);
+    }
   }
 };
